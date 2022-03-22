@@ -5,11 +5,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import javax.swing.*;
-import java.util.Stack;
-
 public class Main {
-
 
     public static BotControl MY_TELEGRAM_BOT;
 
