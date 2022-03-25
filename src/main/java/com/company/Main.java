@@ -1,6 +1,7 @@
 package com.company;
 
 import com.company.controller.BotControl;
+import com.company.db.Database;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -13,6 +14,7 @@ public class Main {
 
 
         Main.MY_TELEGRAM_BOT = new BotControl();
+        Database.compile();
         headerMethod();
     }
 

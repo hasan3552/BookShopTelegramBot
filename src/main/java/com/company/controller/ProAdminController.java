@@ -6,24 +6,24 @@ import lombok.Setter;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
-@Getter
 @Setter
-public class AdminController extends Thread{
+@Getter
+public class ProAdminController extends Thread{
+
     private Message message;
 
-    public AdminController(Message message) {
+    public ProAdminController(Message message) {
         this.message = message;
     }
 
     @Override
     public void run() {
 
-      //  System.out.println("message.getContact() = " + message.getContact());
-
-        // in progress
+    // in progress
     }
 
     public void workCallbackQuery(CallbackQuery callbackQuery, User user) {
+
 
     }
 }

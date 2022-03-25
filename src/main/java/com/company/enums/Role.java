@@ -4,6 +4,7 @@ public enum Role {
 
     ADMIN,
     CUSTOMER,
-    PRO_ADMIN
+    PRO_ADMIN,
+    REGISTER
 
 }
