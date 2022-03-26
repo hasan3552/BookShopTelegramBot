@@ -40,22 +40,22 @@ public class BotControl extends TelegramLongPollingBot {
 
                 if (user.getRole().equals(Role.ADMIN)) {
 
-                    AdminController adminController = new AdminController(message);
+                    AdminController adminController = new AdminController(message, user);
                     adminController.start();
 
                 } else if (user.getRole().equals(Role.PRO_ADMIN)) {
 
-                    ProAdminController proAdminController = new ProAdminController(message);
+                    ProAdminController proAdminController = new ProAdminController(message, user);
                     proAdminController.start();
 
                 } else if (user.getRole().equals(Role.CUSTOMER)) {
 
-                    UserController userController = new UserController(message);
+                    UserController userController = new UserController(message, user);
                     userController.start();
 
                 } else if (user.getRole().equals(Role.REGISTER)) {
 
-                    UserController userController = new UserController(message);
+                    UserController userController = new UserController(message, user);
                     userController.register(user);
 
                 }
@@ -82,17 +82,17 @@ public class BotControl extends TelegramLongPollingBot {
 
                 if (user.getRole().equals(Role.ADMIN)) {
 
-                    AdminController adminController = new AdminController(message);
+                    AdminController adminController = new AdminController(message, user);
                     adminController.workCallbackQuery(callbackQuery, user);
 
                 } else if (user.getRole().equals(Role.PRO_ADMIN)) {
 
-                    ProAdminController proAdminController = new ProAdminController(message);
+                    ProAdminController proAdminController = new ProAdminController(message, user);
                     proAdminController.workCallbackQuery(callbackQuery, user);
 
                 } else if (user.getRole().equals(Role.CUSTOMER)) {
 
-                    UserController userController = new UserController(message);
+                    UserController userController = new UserController(message, user);
                     userController.workCallbackQuery(callbackQuery, user);
 
                 } else if (user.getRole().equals(Role.REGISTER)) {
@@ -110,7 +110,6 @@ public class BotControl extends TelegramLongPollingBot {
             sendMsg(deleteMessage);
 
         }
-
 
 
     }

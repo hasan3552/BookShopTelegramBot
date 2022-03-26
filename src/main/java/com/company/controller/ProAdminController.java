@@ -11,9 +11,11 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 public class ProAdminController extends Thread{
 
     private Message message;
+    private User user;
 
-    public ProAdminController(Message message) {
+    public ProAdminController(Message message,User user) {
         this.message = message;
+        this.user = user;
     }
 
     @Override

@@ -10,9 +10,11 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @Setter
 public class AdminController extends Thread{
     private Message message;
+    private User user;
 
-    public AdminController(Message message) {
+    public AdminController(Message message,User user) {
         this.message = message;
+        this.user = user;
     }
 
     @Override

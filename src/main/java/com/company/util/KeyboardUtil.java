@@ -55,7 +55,7 @@ public class KeyboardUtil {
         List<InlineKeyboardButton> row2 = new ArrayList<>();
         InlineKeyboardButton button2 = new InlineKeyboardButton();
         button2.setText("\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F ENGLISH");
-        button2.setCallbackData(DemoUtil.LANG_RU);
+        button2.setCallbackData(DemoUtil.LANG_EN);
         row2.add(button2);
         rowList.add(row2);
 
@@ -70,13 +70,13 @@ public class KeyboardUtil {
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
 
         for (Hobby hobby : Database.hobbies) {
-            if (!hobby.getIsDelete()){
+            if (!hobby.getIsDelete()) {
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(language.equals(Language.UZ) ? hobby.getNameUz() : language.equals(Language.EN)
-                ? hobby.getNameEn() : hobby.getNameRu());
-                button.setCallbackData("hobby_"+hobby.getId());
+                        ? hobby.getNameEn() : hobby.getNameRu());
+                button.setCallbackData("hobby_" + hobby.getId());
                 row.add(button);
                 rowList.add(row);
             }
@@ -122,27 +122,27 @@ public class KeyboardUtil {
 
         KeyboardRow row = new KeyboardRow();
         KeyboardButton button = new KeyboardButton();
-        button.setText(language.equals(Language.UZ) ? "\uD83D\uDDE3 Suhbatlashish" : language.equals(Language.RU) ?
-                "\uD83D\uDDE3 Беседа" : "\uD83D\uDDE3 Conversation");
+        button.setText(language.equals(Language.UZ) ? DemoUtil.CONVERSATION_UZ : language.equals(Language.RU) ?
+                DemoUtil.CONVERSATION_RU : DemoUtil.CONVERSATION_EN);
         row.add(button);
         rowList.add(row);
 
         KeyboardRow row1 = new KeyboardRow();
         KeyboardButton button1 = new KeyboardButton();
-        button1.setText(language.equals(Language.UZ) ? "\uD83D\uDC65 Do'stlarim" : language.equals(Language.RU) ?
-                "\uD83D\uDC65 Потписчики" : "\uD83D\uDC65 Followers");
+        button1.setText(language.equals(Language.UZ) ? DemoUtil.FOLLOWER_UZ : language.equals(Language.RU) ?
+                DemoUtil.FOLLOWER_RU : DemoUtil.FOLLOWER_EN);
         row1.add(button1);
         rowList.add(row1);
 
-        KeyboardRow row2  = new KeyboardRow();
+        KeyboardRow row2 = new KeyboardRow();
         KeyboardButton button2 = new KeyboardButton();
-        button2.setText(language.equals(Language.UZ) ? "⚙️ Sozlamalar" : language.equals(Language.RU) ?
-                "⚙️ Настройки" : "⚙️ Setting");
+        button2.setText(language.equals(Language.UZ) ? DemoUtil.SETTING_UZ : language.equals(Language.RU) ?
+                DemoUtil.SETTING_RU : DemoUtil.SETTING_EN);
         row2.add(button2);
 
         KeyboardButton button3 = new KeyboardButton();
-        button3.setText(language.equals(Language.UZ) ? "☎️ Adminga murojaat" : language.equals(Language.RU) ?
-                "☎️ Связаться с админом" : "☎️ Contact admin");
+        button3.setText(language.equals(Language.UZ) ? DemoUtil.CONTACT_ADMIN_UZ : language.equals(Language.RU) ?
+                DemoUtil.CONTACT_ADMIN_RU : DemoUtil.CONTACT_ADMIN_EN);
         row2.add(button3);
         rowList.add(row2);
 
