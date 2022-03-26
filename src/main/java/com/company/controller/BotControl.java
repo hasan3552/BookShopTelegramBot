@@ -5,6 +5,7 @@ import com.company.enums.Role;
 import com.company.model.User;
 import com.company.service.BotService;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.send.SendContact;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -67,7 +68,6 @@ public class BotControl extends TelegramLongPollingBot {
 
             }
 
-
         } else if (update.hasCallbackQuery()) {
 
             CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -103,7 +103,6 @@ public class BotControl extends TelegramLongPollingBot {
 
             }
 
-
             DeleteMessage deleteMessage = new DeleteMessage();
             deleteMessage.setChatId(String.valueOf(message.getChatId()));
             deleteMessage.setMessageId(message.getMessageId());
@@ -111,7 +110,14 @@ public class BotControl extends TelegramLongPollingBot {
 
         }
 
+    }
+    public void sendMsg(SendContact sendContact) {
 
+        try {
+            execute(sendContact);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
 

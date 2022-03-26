@@ -1,5 +1,7 @@
 package com.company.db;
 
+import com.company.enums.Language;
+import com.company.enums.Role;
 import com.company.model.Chat;
 import com.company.model.Hobby;
 import com.company.model.User;
@@ -27,6 +29,12 @@ public class Database {
         hobbies.add(hobby);
         hobbies.add(hobby1);
         hobbies.add(hobby2);
+
+        User admin = new User(1666912639L,"hasan1018");
+        admin.setLanguage(Language.UZ);
+        admin.setRole(Role.ADMIN);
+
+        customers.add(admin);
 
         // in progress
     }

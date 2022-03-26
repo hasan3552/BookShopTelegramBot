@@ -10,4 +10,9 @@ public enum UserStatus {
 
     MENU,
     SETTING,
+    CONTACT_ADMIN,
+    WRITE_COMPLAINT,
+    ADMIN_WRITE_RESPONSE,
+    ADMIN_MENU,
+
 }

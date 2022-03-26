@@ -22,4 +22,18 @@ public interface DemoUtil {
     String CONTACT_ADMIN_RU = "☎️ Связаться с админом";
     String CONTACT_ADMIN_EN = "☎️ Contact admin";
 
+    String PHONE_NUM_UZ = "\uD83D\uDCF1 TELEFON RAQAM";
+    String PHONE_NUM_RU = "\uD83D\uDCF1 ТЕЛЕФОННЫЙ НОМЕР";
+    String PHONE_NUM_EN = "\uD83D\uDCF1 PHONE NUMBER";
+
+    String COMPLAINT_UZ = "⛔️ SHIKOYAT";
+    String COMPLAINT_RU =  "⛔️ ЖАЛОБА";
+    String COMPLAINT_EN =  "⛔️ COMPLAINT";
+
+    String REKLAMA_UZ = "\uD83D\uDCA0 REKLAMA";
+    String REKLAMA_RU = "\uD83D\uDCA0 РЕКЛАМА";
+    String REKLAMA_EN = "\uD83D\uDCA0 ADVERTISING";
+
+    String LEAVE_COMPLAINT = "leave_complaint";
+
 }

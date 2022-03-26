@@ -3,6 +3,7 @@ package com.company.util;
 import com.company.db.Database;
 import com.company.enums.Language;
 import com.company.model.Hobby;
+import com.company.model.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -147,6 +148,53 @@ public class KeyboardUtil {
         rowList.add(row2);
 
         markup.setKeyboard(rowList);
+        return markup;
+    }
+
+    public static ReplyKeyboardMarkup getContactAdmin(Language language) {
+
+        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
+        markup.setResizeKeyboard(true);
+
+        List<KeyboardRow> rowList = new ArrayList<>();
+
+        KeyboardRow row = new KeyboardRow();
+        KeyboardButton button = new KeyboardButton(language.equals(Language.UZ) ? DemoUtil.PHONE_NUM_UZ :
+                language.equals(Language.RU) ? DemoUtil.PHONE_NUM_RU : DemoUtil.PHONE_NUM_EN);
+        row.add(button);
+        rowList.add(row);
+
+        KeyboardRow row1 = new KeyboardRow();
+        KeyboardButton button1 = new KeyboardButton(language.equals(Language.UZ) ? DemoUtil.COMPLAINT_UZ :
+                language.equals(Language.RU) ? DemoUtil.COMPLAINT_RU : DemoUtil.COMPLAINT_EN);
+        row1.add(button1);
+        rowList.add(row1);
+
+        KeyboardRow row2 = new KeyboardRow();
+        KeyboardButton button2 = new KeyboardButton(language.equals(Language.UZ) ? DemoUtil.REKLAMA_UZ :
+                language.equals(Language.RU) ? DemoUtil.REKLAMA_RU : DemoUtil.REKLAMA_EN);
+        row2.add(button2);
+        rowList.add(row2);
+
+        markup.setKeyboard(rowList);
+        return markup;
+    }
+
+    public static InlineKeyboardMarkup getForAdminComplaint(User user1, User user) {
+        Language language = user1.getLanguage();
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(language.equals(Language.UZ) ? "JAVOB QAYTARISH" : language.equals(Language.RU) ?
+               "ОТВЕТ ВОЗВРАТ"  :"ANSWER RETURN");
+        button.setCallbackData(user.getId()+"/"+user1.getId());
+        row.add(button);
+        rowList.add(row);
+        markup.setKeyboard(rowList);
+
         return markup;
     }
 }
