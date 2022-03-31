@@ -25,7 +25,7 @@ public class User {
 
     UserStatus status;
     Role role;
-    List<Integer> friendsId = new ArrayList<>();
+//    List<Long> friendsId = new ArrayList<>();
 //    List<Integer> chatId = new ArrayList<>();
 
     public User(Long id, String username) {

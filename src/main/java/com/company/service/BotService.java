@@ -1,11 +1,9 @@
 package com.company.service;
 
 import com.company.Main;
-import com.company.db.Database;
 import com.company.enums.Language;
 import com.company.enums.Role;
 import com.company.enums.UserStatus;
-import com.company.model.Hobby;
 import com.company.model.User;
 import com.company.util.DemoUtil;
 import com.company.util.KeyboardUtil;

@@ -1,18 +1,25 @@
 package com.company.controller;
 
+import com.company.Main;
 import com.company.db.Database;
 import com.company.enums.Role;
 import com.company.model.User;
 import com.company.service.BotService;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendContact;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Optional;
 
 public class BotControl extends TelegramLongPollingBot {
@@ -29,6 +36,9 @@ public class BotControl extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+
+//        Document document = update.getMessage().getDocument();
+//        System.out.println(document.getMimeType());
 
         if (update.hasMessage()) {
 
@@ -95,6 +105,7 @@ public class BotControl extends TelegramLongPollingBot {
                     UserController userController = new UserController(message, user);
                     userController.workCallbackQuery(callbackQuery, user);
 
+
                 } else if (user.getRole().equals(Role.REGISTER)) {
 
                     BotService botService = new BotService(message);
@@ -110,8 +121,26 @@ public class BotControl extends TelegramLongPollingBot {
 
         }
 
+
     }
-    public void sendMsg(SendContact sendContact) {
+    public void sendMsg(SendPhoto sendPhoto) {
+
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMsg(SendDocument sendDocument) {
+
+        try {
+            execute(sendDocument);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+        public void sendMsg(SendContact sendContact) {
 
         try {
             execute(sendContact);

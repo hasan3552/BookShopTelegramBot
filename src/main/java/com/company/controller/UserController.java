@@ -5,7 +5,10 @@ import com.company.db.Database;
 import com.company.enums.Language;
 import com.company.enums.Role;
 import com.company.enums.UserStatus;
+import com.company.model.Chat;
+import com.company.model.Follower;
 import com.company.model.User;
+import com.company.service.UserService;
 import com.company.util.DemoUtil;
 import com.company.util.KeyboardUtil;
 import lombok.Getter;
@@ -13,12 +16,16 @@ import lombok.Setter;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendContact;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Contact;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+
+import java.io.File;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Getter
 @Setter
@@ -34,8 +41,61 @@ public class UserController extends Thread {
 
     @Override
     public void run() {
+        if (user.getStatus().equals(UserStatus.SENDING_REKLAMA)) {
 
-        if (user.getStatus().equals(UserStatus.MENU) && (message.getText().equals(DemoUtil.SETTING_UZ) ||
+            user.setStatus(UserStatus.MENU);
+            Language language = user.getLanguage();
+            SendMessage sendMessage = new SendMessage();
+            ReplyKeyboardMarkup menu = KeyboardUtil.getMenu(user.getLanguage());
+            sendMessage.setReplyMarkup(menu);
+            sendMessage.setText(language.equals(Language.UZ) ? "Reklamangiz uzatildi. Sizga aloqaga chiqishadi." :
+                    language.equals(Language.RU) ? "Ваше объявление отправлено. Они свяжутся с вами." :
+                            "Your ad has been forwarded. They will contact you.");
+            sendMessage.setChatId(String.valueOf(user.getId()));
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+            for (User user1 : Database.customers.stream()
+                    .filter(user1 -> user1.getRole().equals(Role.ADMIN)).toList()) {
+
+                if (message.hasPhoto()) {
+                    SendPhoto sendPhoto = new SendPhoto();
+
+                    List<PhotoSize> photo = message.getPhoto();
+                    String fileId = photo.get(photo.size() - 1).getFileId();
+
+                    InputFile inputFile = new InputFile(fileId);
+                    sendPhoto.setPhoto(inputFile);
+                    sendPhoto.setChatId(String.valueOf(user1.getId()));
+                    sendPhoto.setCaption("<b>REKLAMA !!!</b>\n\n" + message.getCaption());
+                    sendPhoto.setParseMode(ParseMode.HTML);
+
+                    if (message.hasReplyMarkup()) {
+                        sendMessage.setReplyMarkup(message.getReplyMarkup());
+                    }
+
+                    InlineKeyboardMarkup reklama = KeyboardUtil.getReklama();
+                    sendPhoto.setReplyMarkup(reklama);
+
+                    Main.MY_TELEGRAM_BOT.sendMsg(sendPhoto);
+                } else {
+
+                    SendMessage sendMessage1 = new SendMessage();
+                    sendMessage1.setChatId(String.valueOf(user1.getId()));
+                    sendMessage1.setText("<b>REKLAMA</b>\n\n" + message);
+                    sendMessage1.setParseMode(ParseMode.HTML);
+
+                    Main.MY_TELEGRAM_BOT.sendMsg(sendMessage1);
+                }
+                String phoneNumber = Database.customers.stream()
+                        .filter(user2 -> user2.getId().toString().equals(user.getId().toString()))
+                        .findAny().get()
+                        .getPhoneNumber();
+                SendContact sendContact = new SendContact(String.valueOf(user1.getId()), phoneNumber, "REKLAMA");
+
+                Main.MY_TELEGRAM_BOT.sendMsg(sendContact);
+            }
+        } else if (user.getStatus().equals(UserStatus.MENU) && (message.getText().equals(DemoUtil.SETTING_UZ) ||
                 message.getText().equals(DemoUtil.SETTING_RU) || message.getText().equals(DemoUtil.SETTING_EN))) {
 
             SendMessage sendMessage = new SendMessage();
@@ -63,8 +123,8 @@ public class UserController extends Thread {
             sendMessage.setChatId(String.valueOf(user.getId()));
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
-        } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && (message.getText().equals(DemoUtil.PHONE_NUM_EN) ||
-                message.getText().equals(DemoUtil.PHONE_NUM_RU) || message.getText().equals(DemoUtil.PHONE_NUM_UZ))) {
+        } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && ((message.getText().equals(DemoUtil.PHONE_NUM_EN) ||
+                message.getText().equals(DemoUtil.PHONE_NUM_RU) || message.getText().equals(DemoUtil.PHONE_NUM_UZ)))) {
 
             user.setStatus(UserStatus.MENU);
 
@@ -75,8 +135,8 @@ public class UserController extends Thread {
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendContact);
 
-        } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && (message.getText().equals(DemoUtil.COMPLAINT_UZ) ||
-                message.getText().equals(DemoUtil.COMPLAINT_RU) || message.getText().equals(DemoUtil.COMPLAINT_EN))) {
+        } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && ((message.getText().equals(DemoUtil.COMPLAINT_UZ) ||
+                message.getText().equals(DemoUtil.COMPLAINT_RU) || message.getText().equals(DemoUtil.COMPLAINT_EN)))) {
 
             user.setStatus(UserStatus.WRITE_COMPLAINT);
             Language language = user.getLanguage();
@@ -87,10 +147,9 @@ public class UserController extends Thread {
                     "yetkaziladi va sizning shikoyatingiz inobatga olinib sizga albatta javob qaytaramiz." : language.equals(Language.RU) ?
                     "Запишите вашу жалобу.\nОна будет доставлена администратору и мы ответим на вашу жалобу." :
                     "Write down your complaint.\nIt will be delivered to the admin and we will respond to your complaint.");
-            // ReplyKeyboardMarkup complaint = KeyboardUtil.getComplaint(language);
-            // sendMessage.setReplyMarkup(complaint);
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
         } else if (user.getStatus().equals(UserStatus.WRITE_COMPLAINT)) {
             Language language = user.getLanguage();
 
@@ -136,6 +195,240 @@ public class UserController extends Thread {
                 user.setStatus(UserStatus.MENU);
 
             }
+        } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && (message.getText().equals(DemoUtil.REKLAMA_UZ) ||
+                message.getText().equals(DemoUtil.REKLAMA_EN) || message.getText().equals(DemoUtil.REKLAMA_RU))) {
+
+            Language language = user.getLanguage();
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+            sendMessage.setText(language.equals(Language.UZ) ? "Relama roligingizni uzating. Biz uniko'rib chiqib sizga" +
+                    "bog'lanamiz.\n\n<b>ESLATMA REKLAMANGIZNI UZATGANDA RASM HAM BO'LISHI SHART.</b> "
+                    : language.equals(Language.EN) ? "Submit your ad. We will review it and contact you.\n\n" +
+                    "<b> NOTE MUST HAVE A PICTURE WHEN YOU SHOW YOUR ADVERTISING. </b>" :
+                    "Подать объявление. Мы рассмотрим его и свяжемся с вами.\n\n" +
+                            "<b> ПРИМЕЧАНИЕ ДОЛЖНО БЫТЬ ИЗОБРАЖЕНИЕ, КОГДА ВЫ ПОКАЗЫВАЕТЕ ВАШУ РЕКЛАМУ. </b>");
+            user.setStatus(UserStatus.SENDING_REKLAMA);
+            sendMessage.setParseMode(ParseMode.HTML);
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+        } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && (message.getText().equals(DemoUtil.USER_MENU_BACK_UZ) ||
+                message.getText().equals(DemoUtil.USER_MENU_BACK_RU) || message.getText().equals(DemoUtil.USER_MENU_BACK_EN))) {
+
+            Language language = user.getLanguage();
+            user.setStatus(UserStatus.MENU);
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+            sendMessage.setText(language.equals(Language.UZ) ? "Asosiy menyu" : language.equals(Language.RU) ?
+                    "Главное меню" : "Main menu");
+            ReplyKeyboardMarkup menu = KeyboardUtil.getMenu(language);
+            sendMessage.setReplyMarkup(menu);
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+        } else if (user.getStatus().equals(UserStatus.MENU) && (message.getText().equals(DemoUtil.CONVERSATION_UZ) ||
+                message.getText().equals(DemoUtil.CONVERSATION_RU) || message.getText().equals(DemoUtil.CONVERSATION_EN))) {
+
+            user.setStatus(UserStatus.USER_CONVERSATION);
+            Language language = user.getLanguage();
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+            sendMessage.setText(language.equals(Language.UZ) ? "Suhbatlashish bo'limi" : language.equals(Language.RU) ?
+                    "Mеню чата" : "Chat menu");
+            InlineKeyboardMarkup converseMenu = KeyboardUtil.getConverseMenu(language);
+
+            sendMessage.setReplyMarkup(converseMenu);
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+        } else if (user.getStatus().equals(UserStatus.MENU) && (message.getText().equals(DemoUtil.FOLLOWER_UZ) ||
+                message.getText().equals(DemoUtil.FOLLOWER_RU) || message.getText().equals(DemoUtil.FOLLOWER_EN))) {
+
+            user.setStatus(UserStatus.USER_FOLLOWER_BUTTON);
+            Language language = user.getLanguage();
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+            sendMessage.setText(language.equals(Language.UZ) ? "Do'stlarim  menyusi" : language.equals(Language.RU) ?
+                    "Меню моих друзей" : "Menu my friends");
+            InlineKeyboardMarkup frientMenu = KeyboardUtil.getFrientMenu(language);
+            sendMessage.setReplyMarkup(frientMenu);
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+        } else if (user.getStatus().equals(UserStatus.USER_GET_CONTACT)) {
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+            Language language = user.getLanguage();
+
+            if (message.hasContact()) {
+
+                user.setStatus(UserStatus.MENU);
+                String phoneNumber = message.getContact().getPhoneNumber();
+                //     System.out.println(phoneNumber);
+
+                User user1 = null;
+                System.out.println(Database.customers.size());
+                for (User customer : Database.customers) {
+                    System.out.println(customer.getPhoneNumber());
+                    if (customer.getPhoneNumber() != null && phoneNumber.contains(customer.getPhoneNumber())) {
+                        user1 = customer;
+                        break;
+                    }
+                }
+
+                if (user1 != null) {
+
+                    sendMessage.setText(language.equals(Language.UZ) ? "Do'stlashish so'rovingiz foydalanuvchiga uzatildi." +
+                            "Agar do'stingiz tasdiqlasa sizga xabar beriladi va siz suhbatlashish imkoniga ega bo'lasiz." :
+                            language.equals(Language.RU) ? "Ваш запрос на добавление в друзья был отправлен пользователю. " +
+                                    "Если ваш друг подтвердит, вы будете уведомлены, и у вас будет возможность пообщаться." :
+                                    "Your friend request has been forwarded to the user. If your friend confirms, you will be " +
+                                            "notified and you will have the opportunity to chat.");
+
+
+                    SendMessage sendMessage1 = new SendMessage();
+                    sendMessage1.setChatId(String.valueOf(user1.getId()));
+                    sendMessage1.setText(user.getId() + (language.equals(Language.UZ) ?
+                            "\nUshbu telegram IDli foydalanuvchi siz bilan do'stlashmoqchi. " : language.equals(Language.RU) ?
+                            "Этот пользователь Telegram ID хочет с вами дружить." :
+                            "This telegram ID user wants to be friends with you."));
+
+                    InlineKeyboardMarkup friendshipOffer = KeyboardUtil.getFriendshipOffer(user);
+                    sendMessage1.setReplyMarkup(friendshipOffer);
+
+                    Main.MY_TELEGRAM_BOT.sendMsg(sendMessage1);
+
+                } else {
+                    sendMessage.setText(language.equals(Language.UZ) ? "Ushbu raqam egasi bizning botdan ro'yhatdan o'tmagan."
+                            : language.equals(Language.RU) ? "Владелец этого номера не зарегистрирован на нашем боте." :
+                            "The owner of this number is not registered on our bot.");
+                }
+
+            } else {
+                sendMessage.setText(language.equals(Language.UZ) ? "Iltimos contact uzating" : language.equals(Language.RU) ?
+                        "Пожалуйста, свяжитесь с нами" : "Please make a contact");
+            }
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+        } else if (user.getStatus().equals(UserStatus.USER_WROTE_OTHER)) {
+
+            Optional<Chat> optional = Database.chats.stream()
+                    .filter(chat -> chat.getFromId().equals(user.getId())
+                            && chat.getText() == null && !chat.getIsSending())
+                    .findAny();
+
+            if (optional.isPresent()) {
+
+                Chat chat = optional.get();
+                chat.setIsSending(true);
+                user.setStatus(UserStatus.MENU);
+
+//            if (message.hasContact()) {
+//
+//            }
+//            else
+                if (message.hasText()) {
+                    chat.setText(message.getText());
+
+                    SendMessage sendMessage = new SendMessage();
+                    sendMessage.setChatId(String.valueOf(chat.getToId()));
+                    sendMessage.setText(message.getText());
+                    InlineKeyboardMarkup chatMarkup = KeyboardUtil.getChatMarkup(user);
+                    sendMessage.setReplyMarkup(chatMarkup);
+
+                    Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+                }
+//            else if (message.hasPhoto()) {
+//
+//            } else if (message.hasAudio()) {
+//
+//            } else if (message.hasLocation()) {
+//
+//            }
+
+            }
+
+        } else if (user.getStatus().equals(UserStatus.USER_GET_TELEGRAM_ID)) {
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+
+            Language language = user.getLanguage();
+
+            try {
+                Long parseLong = Long.parseLong(message.getText());
+
+                if (Pattern.matches("[0-9]{10}", message.getText())) {
+
+                    user.setStatus(UserStatus.MENU);
+
+                    User user1 = null;
+
+                    System.out.println(Database.customers.size());
+
+                    for (User customer : Database.customers) {
+                        //    System.out.println(customer.getPhoneNumber());
+                        if (customer.getPhoneNumber() != null && parseLong.equals(customer.getId())) {
+                            user1 = customer;
+                            break;
+                        }
+                    }
+
+                    if (user1 != null) {
+
+                        sendMessage.setText(language.equals(Language.UZ) ? "Do'stlashish so'rovingiz foydalanuvchiga uzatildi." +
+                                "Agar do'stingiz tasdiqlasa sizga xabar beriladi va siz suhbatlashish imkoniga ega bo'lasiz." :
+                                language.equals(Language.RU) ? "Ваш запрос на добавление в друзья был отправлен пользователю. " +
+                                        "Если ваш друг подтвердит, вы будете уведомлены, и у вас будет возможность пообщаться." :
+                                        "Your friend request has been forwarded to the user. If your friend confirms, you will be " +
+                                                "notified and you will have the opportunity to chat.");
+
+
+                        SendMessage sendMessage1 = new SendMessage();
+                        sendMessage1.setChatId(String.valueOf(user1.getId()));
+                        sendMessage1.setText(user.getId() + (language.equals(Language.UZ) ?
+                                "\nUshbu telegram IDli foydalanuvchi siz bilan do'stlashmoqchi. " : language.equals(Language.RU) ?
+                                "Этот пользователь Telegram ID хочет с вами дружить." :
+                                "This telegram ID user wants to be friends with you."));
+
+                        InlineKeyboardMarkup friendshipOffer = KeyboardUtil.getFriendshipOffer(user);
+                        sendMessage1.setReplyMarkup(friendshipOffer);
+
+                        Main.MY_TELEGRAM_BOT.sendMsg(sendMessage1);
+
+                    } else {
+                        sendMessage.setText(language.equals(Language.UZ) ?
+                                "Ushbu telegram IDli bizning botdan ro'yhatdan o'tmagan." : language.equals(Language.RU) ?
+                                "Этот идентификатор телеграммы не зарегистрирован в нашем боте." :
+                                "This telegram ID is not registered on our bot.");
+                    }
+
+                } else {
+                    sendMessage.setText(language.equals(Language.UZ) ? "Iltimos faqat telegram ID kiriting" :
+                            language.equals(Language.RU) ? "Пожалуйста, введите только идентификатор телеграммы" :
+                                    "Please enter only the telegram ID");
+                }
+
+                Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+
+            } catch (Exception e) {
+
+                sendMessage.setText(language.equals(Language.UZ) ? "Iltimos faqat telegram ID kiriting" :
+                        language.equals(Language.RU) ? "Пожалуйста, введите только идентификатор телеграммы" :
+                                "Please enter only the telegram ID");
+
+
+                Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+            }
+
+
         }
         // in progress
     }
@@ -150,6 +443,7 @@ public class UserController extends Thread {
             InlineKeyboardMarkup language = KeyboardUtil.getLanguage();
             sendMessage.setReplyMarkup(language);
             user.setStatus(UserStatus.LANGUAGE);
+            user.setPhoneNumber(message.getContact().getPhoneNumber());
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
@@ -176,8 +470,105 @@ public class UserController extends Thread {
                     ? "Язык изменен." : "Language changed.");
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+        } else if ((user.getStatus().equals(UserStatus.USER_CONVERSATION) || user.getStatus().equals(UserStatus.USER_FOLLOWER_BUTTON)) &&
+                data.equals(DemoUtil.BACK_FROM_CONVERSE)) {
+
+            user.setStatus(UserStatus.MENU);
+        } else if (user.getStatus().equals(UserStatus.USER_FOLLOWER_BUTTON) && data.equals(DemoUtil.SHOW_MY_FOLLOWERS)) {
+
+            UserService userService = new UserService(message, user);
+            userService.showMyFriends();
+
+        } else if ((user.getStatus().equals(UserStatus.USER_FOLLOWER_BUTTON) && data.equals(DemoUtil.ADD_FRIEND_USER))
+                || (user.getStatus().equals(UserStatus.USER_CONVERSATION) && data.equals(DemoUtil.WITH_NEW_FRIEND))) {
+
+            UserService service = new UserService(message, user);
+            service.addFriend();
+
+
+        } else if (user.getStatus().equals(UserStatus.USER_FOLLOWER_BUTTON) && data.equals(DemoUtil.DELETE_FRIEND_USER)) {
+            // in progress
+
+
+        } else if (data.equals(DemoUtil.BY_PHONE_NUMBER)) {
+
+            user.setStatus(UserStatus.USER_GET_CONTACT);
+            Language language = user.getLanguage();
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+            sendMessage.setText(language.equals(Language.UZ) ? "Do'stlashmoqchi bo'lgan foydalanuvchining telefon raqamini kiriting."
+                    : language.equals(Language.RU) ? "Введите номер телефона пользователя, с которым хотите дружить." :
+                    "Enter the phone number of the user you want to be friends with.");
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+        } else if (data.equals(DemoUtil.BY_USER_ID)) {
+
+            user.setStatus(UserStatus.USER_GET_TELEGRAM_ID);
+            Language language = user.getLanguage();
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+            sendMessage.setText(language.equals(Language.UZ) ? "Do'stlashmoqchi bo'lgan foydalanuvchining telegram IDsini kiriting."
+                    : language.equals(Language.RU) ? "Введите идентификатор телеграммы пользователя, с которым хотите дружить." :
+                    "Enter the telegram ID of the user you want to be friends with.");
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+        } else if (Pattern.matches("truee[0-9]{10}", data)) {
+            String truee = data.replace("truee", "");
+
+            User user2 = Database.customers.stream()
+                    .filter(user1 -> String.valueOf(user1.getId()).equals(truee))
+                    .findAny().get();
+            Language language = user2.getLanguage();
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user2.getId()));
+            sendMessage.setText(user.getId() + (language.equals(Language.UZ) ? "\nUshbu telegram ID foydalanuvchi" +
+                    " so'rovingizni qabul qildi." : language.equals(Language.RU) ? "\nЭтот идентификатор телеграммы принял" +
+                    " ваш запрос пользователя." : "\nThis telegram ID has received your user request."));
+
+            InlineKeyboardMarkup chatMarkup = KeyboardUtil.getChatMarkup(user);
+            sendMessage.setReplyMarkup(chatMarkup);
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+
+            SendMessage sendMessage1 = new SendMessage();
+            sendMessage1.setChatId(String.valueOf(user.getId()));
+            sendMessage1.setText(user2.getId() + (language.equals(Language.UZ) ? "\nSuhbatlashish"
+                    : language.equals(Language.RU) ? "\nБеседа"
+                    : "\nConversation"));
+
+            InlineKeyboardMarkup chatMarkup1 = KeyboardUtil.getChatMarkup(user2);
+            sendMessage1.setReplyMarkup(chatMarkup1);
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage1);
+
+            Follower follower = new Follower(Database.followers.size(), user.getId(), user2.getId());
+            Follower follower1 = new Follower(Database.followers.size() + 1, user2.getId(), user.getId());
+
+            Database.followers.add(follower);
+            Database.followers.add(follower1);
+
+        } else if (Pattern.matches("[0-9]{10}", data)) {
+
+            user.setStatus(UserStatus.USER_WROTE_OTHER);
+            Chat chat = new Chat(user.getId(), Long.parseLong(data), null);
+            Database.chats.add(chat);
+
+            Language language = user.getLanguage();
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
+            sendMessage.setText(language.equals(Language.UZ) ? "<b>XABARINGIZNI YOZING</b>" : language.equals(Language.RU) ?
+                    "НАПИШИ СООБЩЕНИЕ" : "WRITE MESSAGE");
+            sendMessage.setParseMode(ParseMode.HTML);
+
+            Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
         }
-
-
     }
 }

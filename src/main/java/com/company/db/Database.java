@@ -3,6 +3,7 @@ package com.company.db;
 import com.company.enums.Language;
 import com.company.enums.Role;
 import com.company.model.Chat;
+import com.company.model.Follower;
 import com.company.model.Hobby;
 import com.company.model.User;
 
@@ -14,6 +15,7 @@ public class Database {
     public static List<User> customers = new ArrayList<>();
     public static List<Chat> chats = new ArrayList<>();
     public static List<Hobby> hobbies = new ArrayList<>();
+    public static List<Follower> followers = new ArrayList<>();
 
     public static void compile(){
 
@@ -30,11 +32,11 @@ public class Database {
         hobbies.add(hobby1);
         hobbies.add(hobby2);
 
-        User admin = new User(1666912639L,"hasan1018");
-        admin.setLanguage(Language.UZ);
-        admin.setRole(Role.ADMIN);
+//        User admin = new User(1666912639L,"hasan1018");
+//        admin.setLanguage(Language.UZ);
+        //admin.setRole(Role.ADMIN);
 
-        customers.add(admin);
+//        customers.add(admin);
 
         // in progress
     }
