@@ -2,6 +2,7 @@ package com.company.controller;
 
 import com.company.Main;
 import com.company.db.Database;
+import com.company.db.DbConnection;
 import com.company.enums.Language;
 import com.company.enums.UserStatus;
 import com.company.model.Chat;
@@ -21,7 +22,6 @@ import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 
-import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -51,8 +51,11 @@ public class AdminController extends Thread {
 
                 Chat chat = optional.get();
                 chat.setIsSending(true);
-                user.setStatus(UserStatus.ADMIN_MENU);
                 chat.setText(message.getText());
+                DbConnection.updateChatTextAndSending(chat.getChatId(),message.getText());
+
+                user.setStatus(UserStatus.ADMIN_MENU);
+                DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
                 SendMessage sendMessage = new SendMessage();
                 sendMessage.setChatId(String.valueOf(chat.getToId()));
@@ -74,8 +77,9 @@ public class AdminController extends Thread {
                 for (User customer : Database.customers) {
 
                     user.setStatus(UserStatus.ADMIN_MENU);
-                    SendPhoto sendPhoto = new SendPhoto();
+                    DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
+                    SendPhoto sendPhoto = new SendPhoto();
                     // List<PhotoSize> photo = message.getPhoto();
                     // String fileId = photo.get(photo.size() - 1).getFileId();
                     // InputFile inputFile = new InputFile(eBook1.getUrlPhoto());
@@ -108,23 +112,29 @@ public class AdminController extends Thread {
             sendMessage.setChatId(String.valueOf(user.getId()));
             sendMessage.setText("<b>WELCOME ADMIN !!!</b>");
             sendMessage.setParseMode(ParseMode.HTML);
+
             ReplyKeyboardMarkup adminMenu = KeyboardUtil.getAdminMenu(user.getLanguage());
             sendMessage.setReplyMarkup(adminMenu);
+
             user.setStatus(UserStatus.ADMIN_MENU);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
         } else if (user.getStatus().equals(UserStatus.ADMIN_MENU) && (message.getText().equals(DemoUtil.SETTING_UZ) ||
                 message.getText().equals(DemoUtil.SETTING_RU) || message.getText().equals(DemoUtil.SETTING_EN))) {
+
             Language language = user.getLanguage();
             user.setStatus(UserStatus.SETTING);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
-            InlineKeyboardMarkup languageIn = KeyboardUtil.getLanguage();
-            sendMessage.setReplyMarkup(languageIn);
             sendMessage.setText(language.equals(Language.UZ) ? "Tilni tanlang:" : language.equals(Language.RU) ?
                     "Выберите язык:" : "Choose  language:");
+
+            InlineKeyboardMarkup languageIn = KeyboardUtil.getLanguage();
+            sendMessage.setReplyMarkup(languageIn);
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
         } else if (user.getStatus().equals(UserStatus.ADMIN_MENU) && (message.getText().equals(DemoUtil.ALL_USERS_UZ) ||
@@ -137,6 +147,8 @@ public class AdminController extends Thread {
                 message.getText().equals(DemoUtil.SEND_REKLAMA_RU) || message.getText().equals(DemoUtil.SEND_REKLAMA_EN))) {
 
             user.setStatus(UserStatus.ADMIN_PUT_REKLAMA);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
             sendMessage.setText(user.getLanguage().equals(Language.UZ) ?
@@ -164,6 +176,7 @@ public class AdminController extends Thread {
             System.out.println("split[1] = " + split[1]);
 
             Chat chat = new Chat(Long.parseLong(split[1]), Long.parseLong(split[0]), null);
+            DbConnection.addChat(chat);
             Database.chats.add(chat);
 
             SendMessage sendMessage = new SendMessage();
@@ -172,6 +185,7 @@ public class AdminController extends Thread {
             sendMessage.setChatId(String.valueOf(user.getId()));
 
             user.setStatus(UserStatus.ADMIN_WRITE_RESPONSE);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
@@ -180,6 +194,9 @@ public class AdminController extends Thread {
             user.setStatus(UserStatus.ADMIN_MENU);
             user.setLanguage(data.equals(DemoUtil.LANG_UZ) ? Language.UZ : data.equals(DemoUtil.LANG_RU) ?
                     Language.RU : Language.EN);
+
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+            DbConnection.updateCustomerLanguage(user.getLanguage().name(), user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setText(user.getLanguage().equals(Language.UZ) ? "Til o'zgartirildi." : user.getLanguage().equals(Language.RU) ?
@@ -195,8 +212,9 @@ public class AdminController extends Thread {
                 for (User customer : Database.customers) {
 
                     user.setStatus(UserStatus.ADMIN_MENU);
-                    SendPhoto sendPhoto = new SendPhoto();
+                    DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
+                    SendPhoto sendPhoto = new SendPhoto();
                     // List<PhotoSize> photo = message.getPhoto();
                     // String fileId = photo.get(photo.size() - 1).getFileId();
                     // InputFile inputFile = new InputFile(eBook1.getUrlPhoto());

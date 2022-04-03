@@ -1,7 +1,7 @@
 package com.company.controller;
 
-import com.company.Main;
 import com.company.db.Database;
+import com.company.db.DbConnection;
 import com.company.enums.Role;
 import com.company.model.User;
 import com.company.service.BotService;
@@ -12,14 +12,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Optional;
 
 public class BotControl extends TelegramLongPollingBot {
@@ -37,9 +33,6 @@ public class BotControl extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
 
-//        Document document = update.getMessage().getDocument();
-//        System.out.println(document.getMimeType());
-
         if (update.hasMessage()) {
 
             Message message = update.getMessage();
@@ -54,11 +47,6 @@ public class BotControl extends TelegramLongPollingBot {
                     AdminController adminController = new AdminController(message, user);
                     adminController.start();
 
-                } else if (user.getRole().equals(Role.PRO_ADMIN)) {
-
-                    ProAdminController proAdminController = new ProAdminController(message, user);
-                    proAdminController.start();
-
                 } else if (user.getRole().equals(Role.CUSTOMER)) {
 
                     UserController userController = new UserController(message, user);
@@ -72,7 +60,10 @@ public class BotControl extends TelegramLongPollingBot {
                 }
             } else {
                 User user = new User(message.getChatId(), message.getFrom().getUserName());
+
                 Database.customers.add(user);
+                DbConnection.addCustomer(user);
+
                 BotService botService = new BotService(message);
                 botService.start();
 
@@ -95,11 +86,6 @@ public class BotControl extends TelegramLongPollingBot {
                     AdminController adminController = new AdminController(message, user);
                     adminController.workCallbackQuery(callbackQuery, user);
 
-                } else if (user.getRole().equals(Role.PRO_ADMIN)) {
-
-                    ProAdminController proAdminController = new ProAdminController(message, user);
-                    proAdminController.workCallbackQuery(callbackQuery, user);
-
                 } else if (user.getRole().equals(Role.CUSTOMER)) {
 
                     UserController userController = new UserController(message, user);
@@ -120,7 +106,6 @@ public class BotControl extends TelegramLongPollingBot {
             sendMsg(deleteMessage);
 
         }
-
 
     }
     public void sendMsg(SendPhoto sendPhoto) {

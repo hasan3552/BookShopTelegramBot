@@ -1,6 +1,7 @@
 package com.company.service;
 
 import com.company.Main;
+import com.company.db.DbConnection;
 import com.company.enums.Language;
 import com.company.enums.Role;
 import com.company.enums.UserStatus;
@@ -28,6 +29,7 @@ public class BotService extends Thread{
 
     @Override
     public void run() {
+       // System.out.println("message.getText() = " + message.getText());
 
         if (message.hasText()) {
 
@@ -41,13 +43,6 @@ public class BotService extends Thread{
                 Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
             }
 
-
-
-
-
-
-
-
         }
         // in progress
     }
@@ -60,7 +55,10 @@ public class BotService extends Thread{
 
             user.setLanguage(data.equals(DemoUtil.LANG_EN) ? Language.EN :
                     data.equals(DemoUtil.LANG_RU) ? Language.RU : Language.UZ);
+            DbConnection.updateCustomerLanguage(user.getLanguage().name(),user.getId());
+
             user.setStatus(UserStatus.HOBBY);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setText(user.getLanguage().equals(Language.UZ) ? "Botdan nima maqsadda foydalanmoqchisiz."
@@ -77,7 +75,10 @@ public class BotService extends Thread{
 
             String s = data.replace("hobby_", "");
             user.setHobbyId(Integer.parseInt(s));
+            DbConnection.updateCustomerHobby(Integer.parseInt(s),user.getId());
+
             user.setStatus(UserStatus.GENDER);
+            DbConnection.updateCustomerStatus(user.getStatus(), user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
@@ -90,7 +91,10 @@ public class BotService extends Thread{
         }else if (user.getStatus().equals(UserStatus.GENDER)){
             user.setGender(data);
             user.setStatus(UserStatus.MENU);
+            DbConnection.updateCustomerStatus(user.getStatus(), user.getId());
+
             user.setRole(Role.CUSTOMER);
+            DbConnection.updateCustomerRole(user.getRole(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setText(user.getLanguage().equals(Language.UZ) ? "<b>ASSALOMU ALEYKUM</b> \nBOTGA XUSH KELIBSIZ.":

@@ -2,6 +2,7 @@ package com.company.controller;
 
 import com.company.Main;
 import com.company.db.Database;
+import com.company.db.DbConnection;
 import com.company.enums.Language;
 import com.company.enums.Role;
 import com.company.enums.UserStatus;
@@ -19,10 +20,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 
-import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -33,10 +32,12 @@ public class UserController extends Thread {
 
     private Message message;
     private User user;
+    private Language language;
 
     public UserController(Message message, User user) {
         this.message = message;
         this.user = user;
+        language = user.getLanguage();
     }
 
     @Override
@@ -44,7 +45,8 @@ public class UserController extends Thread {
         if (user.getStatus().equals(UserStatus.SENDING_REKLAMA)) {
 
             user.setStatus(UserStatus.MENU);
-            Language language = user.getLanguage();
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+
             SendMessage sendMessage = new SendMessage();
             ReplyKeyboardMarkup menu = KeyboardUtil.getMenu(user.getLanguage());
             sendMessage.setReplyMarkup(menu);
@@ -105,28 +107,32 @@ public class UserController extends Thread {
             InlineKeyboardMarkup language = KeyboardUtil.getLanguage();
             sendMessage.setReplyMarkup(language);
 
+
             user.setStatus(UserStatus.SETTING);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
         } else if (user.getStatus().equals(UserStatus.MENU) && (message.getText().equals(DemoUtil.CONTACT_ADMIN_UZ) ||
                 message.getText().equals(DemoUtil.CONTACT_ADMIN_RU) || message.getText().equals(DemoUtil.CONTACT_ADMIN_EN))) {
 
             user.setStatus(UserStatus.CONTACT_ADMIN);
-            SendMessage sendMessage = new SendMessage();
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
-            Language language = user.getLanguage();
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(user.getId()));
             sendMessage.setText(language.equals(Language.UZ) ? "Murojaat maqsadini tanlang:" : language.equals(Language.RU) ?
                     "Выберите цель приложения:" : "Select the purpose of the application:");
+
             ReplyKeyboardMarkup contactAdmin = KeyboardUtil.getContactAdmin(language);
             sendMessage.setReplyMarkup(contactAdmin);
 
-            sendMessage.setChatId(String.valueOf(user.getId()));
-
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
         } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && ((message.getText().equals(DemoUtil.PHONE_NUM_EN) ||
                 message.getText().equals(DemoUtil.PHONE_NUM_RU) || message.getText().equals(DemoUtil.PHONE_NUM_UZ)))) {
 
             user.setStatus(UserStatus.MENU);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendContact sendContact = new SendContact(String.valueOf(user.getId()),
                     "+99891 645 35 52", "Hasan");
@@ -139,7 +145,7 @@ public class UserController extends Thread {
                 message.getText().equals(DemoUtil.COMPLAINT_RU) || message.getText().equals(DemoUtil.COMPLAINT_EN)))) {
 
             user.setStatus(UserStatus.WRITE_COMPLAINT);
-            Language language = user.getLanguage();
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
@@ -151,7 +157,6 @@ public class UserController extends Thread {
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
         } else if (user.getStatus().equals(UserStatus.WRITE_COMPLAINT)) {
-            Language language = user.getLanguage();
 
             if (message.getText().equals(DemoUtil.COMPLAINT_EN) || message.getText().equals(DemoUtil.COMPLAINT_RU) ||
                     message.getText().equals(DemoUtil.COMPLAINT_UZ) || message.getText().equals(DemoUtil.PHONE_NUM_UZ) ||
@@ -164,6 +169,7 @@ public class UserController extends Thread {
                         "Вы должны оставить свою жалобу здесь." : "You have to leave your complaint here.");
 
                 Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
             } else {
 
                 for (User user1 : Database.customers.stream()
@@ -193,12 +199,11 @@ public class UserController extends Thread {
                 Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
                 user.setStatus(UserStatus.MENU);
+                DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             }
         } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && (message.getText().equals(DemoUtil.REKLAMA_UZ) ||
                 message.getText().equals(DemoUtil.REKLAMA_EN) || message.getText().equals(DemoUtil.REKLAMA_RU))) {
-
-            Language language = user.getLanguage();
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
@@ -208,21 +213,24 @@ public class UserController extends Thread {
                     "<b> NOTE MUST HAVE A PICTURE WHEN YOU SHOW YOUR ADVERTISING. </b>" :
                     "Подать объявление. Мы рассмотрим его и свяжемся с вами.\n\n" +
                             "<b> ПРИМЕЧАНИЕ ДОЛЖНО БЫТЬ ИЗОБРАЖЕНИЕ, КОГДА ВЫ ПОКАЗЫВАЕТЕ ВАШУ РЕКЛАМУ. </b>");
-            user.setStatus(UserStatus.SENDING_REKLAMA);
             sendMessage.setParseMode(ParseMode.HTML);
+
+            user.setStatus(UserStatus.SENDING_REKLAMA);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
         } else if (user.getStatus().equals(UserStatus.CONTACT_ADMIN) && (message.getText().equals(DemoUtil.USER_MENU_BACK_UZ) ||
                 message.getText().equals(DemoUtil.USER_MENU_BACK_RU) || message.getText().equals(DemoUtil.USER_MENU_BACK_EN))) {
 
-            Language language = user.getLanguage();
             user.setStatus(UserStatus.MENU);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
             sendMessage.setText(language.equals(Language.UZ) ? "Asosiy menyu" : language.equals(Language.RU) ?
                     "Главное меню" : "Main menu");
+
             ReplyKeyboardMarkup menu = KeyboardUtil.getMenu(language);
             sendMessage.setReplyMarkup(menu);
 
@@ -232,14 +240,14 @@ public class UserController extends Thread {
                 message.getText().equals(DemoUtil.CONVERSATION_RU) || message.getText().equals(DemoUtil.CONVERSATION_EN))) {
 
             user.setStatus(UserStatus.USER_CONVERSATION);
-            Language language = user.getLanguage();
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
             sendMessage.setText(language.equals(Language.UZ) ? "Suhbatlashish bo'limi" : language.equals(Language.RU) ?
                     "Mеню чата" : "Chat menu");
-            InlineKeyboardMarkup converseMenu = KeyboardUtil.getConverseMenu(language);
 
+            InlineKeyboardMarkup converseMenu = KeyboardUtil.getConverseMenu(language);
             sendMessage.setReplyMarkup(converseMenu);
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
@@ -248,7 +256,7 @@ public class UserController extends Thread {
                 message.getText().equals(DemoUtil.FOLLOWER_RU) || message.getText().equals(DemoUtil.FOLLOWER_EN))) {
 
             user.setStatus(UserStatus.USER_FOLLOWER_BUTTON);
-            Language language = user.getLanguage();
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
@@ -263,18 +271,17 @@ public class UserController extends Thread {
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
-            Language language = user.getLanguage();
 
             if (message.hasContact()) {
 
                 user.setStatus(UserStatus.MENU);
+                DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+
                 String phoneNumber = message.getContact().getPhoneNumber();
-                //     System.out.println(phoneNumber);
 
                 User user1 = null;
-                System.out.println(Database.customers.size());
+
                 for (User customer : Database.customers) {
-                    System.out.println(customer.getPhoneNumber());
                     if (customer.getPhoneNumber() != null && phoneNumber.contains(customer.getPhoneNumber())) {
                         user1 = customer;
                         break;
@@ -318,7 +325,7 @@ public class UserController extends Thread {
         } else if (user.getStatus().equals(UserStatus.USER_WROTE_OTHER)) {
 
             Optional<Chat> optional = Database.chats.stream()
-                    .filter(chat -> chat.getFromId().equals(user.getId())
+                    .filter(chat -> String.valueOf(chat.getFromId()).equals(String.valueOf(user.getId()))
                             && chat.getText() == null && !chat.getIsSending())
                     .findAny();
 
@@ -326,7 +333,15 @@ public class UserController extends Thread {
 
                 Chat chat = optional.get();
                 chat.setIsSending(true);
+
+
                 user.setStatus(UserStatus.MENU);
+                DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+
+                Optional<Follower> optional1 = Database.followers.stream()
+                        .filter(follower -> follower.getToId().equals(chat.getToId())
+                                && follower.getWithId().equals(chat.getFromId()))
+                        .findAny();
 
 //            if (message.hasContact()) {
 //
@@ -334,12 +349,18 @@ public class UserController extends Thread {
 //            else
                 if (message.hasText()) {
                     chat.setText(message.getText());
+                    DbConnection.updateChatTextAndSending(chat.getChatId(), chat.getText());
 
                     SendMessage sendMessage = new SendMessage();
                     sendMessage.setChatId(String.valueOf(chat.getToId()));
-                    sendMessage.setText(message.getText());
-                    InlineKeyboardMarkup chatMarkup = KeyboardUtil.getChatMarkup(user);
+                    sendMessage.setText(message.getText() + "\n\n<b>FROM: tg://" + optional1.get().getWithId() + "</b>");
+//                    sendMessage.setDisableWebPagePreview(true);
+//                    sendMessage.setProtectContent(true);
+//                    sendMessage.setAllowSendingWithoutReply(true);
+
+                    InlineKeyboardMarkup chatMarkup = KeyboardUtil.getChatMarkup(chat.getFromId());
                     sendMessage.setReplyMarkup(chatMarkup);
+                    sendMessage.setParseMode(ParseMode.HTML);
 
                     Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
@@ -359,21 +380,17 @@ public class UserController extends Thread {
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
 
-            Language language = user.getLanguage();
-
             try {
                 Long parseLong = Long.parseLong(message.getText());
 
                 if (Pattern.matches("[0-9]{10}", message.getText())) {
 
                     user.setStatus(UserStatus.MENU);
+                    DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
                     User user1 = null;
 
-                    System.out.println(Database.customers.size());
-
                     for (User customer : Database.customers) {
-                        //    System.out.println(customer.getPhoneNumber());
                         if (customer.getPhoneNumber() != null && parseLong.equals(customer.getId())) {
                             user1 = customer;
                             break;
@@ -429,6 +446,35 @@ public class UserController extends Thread {
             }
 
 
+        } else if (user.getStatus().equals(UserStatus.USER_GIVE_NICKNAME)) {
+
+            if (message.hasText()) {
+                user.setStatus(UserStatus.MENU);
+                DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+
+            }
+            Optional<Follower> optional = Database.followers.stream()
+                    .filter(follower -> follower.getToId().equals(user.getId()) && follower.getNickname() == null)
+                    .findAny();
+
+            if (optional.isPresent()) {
+
+                Follower follower = optional.get();
+                follower.setNickname(message.getText());
+                DbConnection.updateFollowerNickname(follower.getId(),follower.getNickname());
+
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setChatId(String.valueOf(message.getChatId()));
+                sendMessage.setText(language.equals(Language.UZ) ? "<b>Suhbatlashish</b>" :
+                        language.equals(Language.RU) ? "<b> Чат </b>" : "<b> Chat </b>");
+                sendMessage.setParseMode(ParseMode.HTML);
+
+                InlineKeyboardMarkup chatMarkup = KeyboardUtil.getChatMarkup(follower.getWithId());
+                sendMessage.setReplyMarkup(chatMarkup);
+
+                Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
+            }
         }
         // in progress
     }
@@ -440,15 +486,19 @@ public class UserController extends Thread {
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(message.getChatId()));
             sendMessage.setText("CHANGE LANGUAGE");
+
             InlineKeyboardMarkup language = KeyboardUtil.getLanguage();
             sendMessage.setReplyMarkup(language);
+
             user.setStatus(UserStatus.LANGUAGE);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+
             user.setPhoneNumber(message.getContact().getPhoneNumber());
+            DbConnection.updateCustomerPhoneNumber(message.getContact().getPhoneNumber(), user.getId());
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
         }
-
     }
 
     public void workCallbackQuery(CallbackQuery callbackQuery, User user) {
@@ -460,20 +510,27 @@ public class UserController extends Thread {
 
             user.setLanguage(data.equals(DemoUtil.LANG_UZ) ? Language.UZ : data.equals(DemoUtil.LANG_RU) ?
                     Language.RU : Language.EN);
+            DbConnection.updateCustomerLanguage(user.getLanguage().name(),user.getId());
+
             user.setStatus(UserStatus.MENU);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
+            sendMessage.setText(user.getLanguage().equals(Language.UZ) ? "Til o'zgartirildi." :
+                    user.getLanguage().equals(Language.RU) ? "Язык изменен." : "Language changed.");
+
             ReplyKeyboardMarkup menu = KeyboardUtil.getMenu(user.getLanguage());
             sendMessage.setReplyMarkup(menu);
-            sendMessage.setText(user.getLanguage().equals(Language.UZ) ? "Til o'zgartirildi." : user.getLanguage().equals(Language.RU)
-                    ? "Язык изменен." : "Language changed.");
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
+
         } else if ((user.getStatus().equals(UserStatus.USER_CONVERSATION) || user.getStatus().equals(UserStatus.USER_FOLLOWER_BUTTON)) &&
                 data.equals(DemoUtil.BACK_FROM_CONVERSE)) {
 
             user.setStatus(UserStatus.MENU);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+
         } else if (user.getStatus().equals(UserStatus.USER_FOLLOWER_BUTTON) && data.equals(DemoUtil.SHOW_MY_FOLLOWERS)) {
 
             UserService userService = new UserService(message, user);
@@ -493,7 +550,7 @@ public class UserController extends Thread {
         } else if (data.equals(DemoUtil.BY_PHONE_NUMBER)) {
 
             user.setStatus(UserStatus.USER_GET_CONTACT);
-            Language language = user.getLanguage();
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
@@ -506,12 +563,13 @@ public class UserController extends Thread {
         } else if (data.equals(DemoUtil.BY_USER_ID)) {
 
             user.setStatus(UserStatus.USER_GET_TELEGRAM_ID);
-            Language language = user.getLanguage();
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));
-            sendMessage.setText(language.equals(Language.UZ) ? "Do'stlashmoqchi bo'lgan foydalanuvchining telegram IDsini kiriting."
-                    : language.equals(Language.RU) ? "Введите идентификатор телеграммы пользователя, с которым хотите дружить." :
+            sendMessage.setText(language.equals(Language.UZ) ?
+                    "Do'stlashmoqchi bo'lgan foydalanuvchining telegram IDsini kiriting." : language.equals(Language.RU)
+                    ? "Введите идентификатор телеграммы пользователя, с которым хотите дружить." :
                     "Enter the telegram ID of the user you want to be friends with.");
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
@@ -522,44 +580,54 @@ public class UserController extends Thread {
             User user2 = Database.customers.stream()
                     .filter(user1 -> String.valueOf(user1.getId()).equals(truee))
                     .findAny().get();
+
             Language language = user2.getLanguage();
+
+            user2.setStatus(UserStatus.USER_GIVE_NICKNAME);
+            DbConnection.updateCustomerStatus(user2.getStatus(),user2.getId());
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user2.getId()));
-            sendMessage.setText(user.getId() + (language.equals(Language.UZ) ? "\nUshbu telegram ID foydalanuvchi" +
-                    " so'rovingizni qabul qildi." : language.equals(Language.RU) ? "\nЭтот идентификатор телеграммы принял" +
-                    " ваш запрос пользователя." : "\nThis telegram ID has received your user request."));
-
-            InlineKeyboardMarkup chatMarkup = KeyboardUtil.getChatMarkup(user);
-            sendMessage.setReplyMarkup(chatMarkup);
+            sendMessage.setText("<b>" + user2.getId() + "</b>" +
+                    (language.equals(Language.UZ) ? "\n\nUshbu telegram ID foydalanuvchi so'rovingizni qabul qildi." +
+                            "\nDo'stingizga taxallus bering."
+                            : language.equals(Language.RU) ? "\n\nЭтот идентификатор телеграммы принял" +
+                            " ваш запрос пользователя.\nДайте своему другу прозвище." :
+                            "\n\nThis telegram ID has received your user request.\nGive your friend a nickname."));
+            sendMessage.setParseMode(ParseMode.HTML);
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage);
 
+            user.setStatus(UserStatus.USER_GIVE_NICKNAME);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
 
             SendMessage sendMessage1 = new SendMessage();
-            sendMessage1.setChatId(String.valueOf(user.getId()));
-            sendMessage1.setText(user2.getId() + (language.equals(Language.UZ) ? "\nSuhbatlashish"
-                    : language.equals(Language.RU) ? "\nБеседа"
-                    : "\nConversation"));
 
-            InlineKeyboardMarkup chatMarkup1 = KeyboardUtil.getChatMarkup(user2);
-            sendMessage1.setReplyMarkup(chatMarkup1);
+            Language language1 = user.getLanguage();
+            sendMessage1.setChatId(String.valueOf(user.getId()));
+            sendMessage1.setText("<b>" + user2.getId() + "</b>" + (language1.equals(Language.UZ) ?
+                    "\n\nDo'stingizga taxallus bering." : language1.equals(Language.RU) ?
+                    "\n\nДайте своему другу прозвище." : "\n\nGive your friend a nickname."));
+            sendMessage1.setParseMode(ParseMode.HTML);
 
             Main.MY_TELEGRAM_BOT.sendMsg(sendMessage1);
 
             Follower follower = new Follower(Database.followers.size(), user.getId(), user2.getId());
-            Follower follower1 = new Follower(Database.followers.size() + 1, user2.getId(), user.getId());
-
             Database.followers.add(follower);
+            DbConnection.addFollower(follower);
+
+            Follower follower1 = new Follower(Database.followers.size() + 1, user2.getId(), user.getId());
             Database.followers.add(follower1);
+            DbConnection.addFollower(follower1);
 
         } else if (Pattern.matches("[0-9]{10}", data)) {
 
             user.setStatus(UserStatus.USER_WROTE_OTHER);
+            DbConnection.updateCustomerStatus(user.getStatus(),user.getId());
+
             Chat chat = new Chat(user.getId(), Long.parseLong(data), null);
             Database.chats.add(chat);
-
-            Language language = user.getLanguage();
+            DbConnection.addChat(chat);
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(user.getId()));

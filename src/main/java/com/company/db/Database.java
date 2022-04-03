@@ -2,6 +2,7 @@ package com.company.db;
 
 import com.company.enums.Language;
 import com.company.enums.Role;
+import com.company.enums.UserStatus;
 import com.company.model.Chat;
 import com.company.model.Follower;
 import com.company.model.Hobby;
@@ -16,27 +17,40 @@ public class Database {
     public static List<Chat> chats = new ArrayList<>();
     public static List<Hobby> hobbies = new ArrayList<>();
     public static List<Follower> followers = new ArrayList<>();
+    public static List<Language> languages = new ArrayList<>();
+    public static List<Role> roles=  new ArrayList<>();
+    public static List<UserStatus> userStatuses = new ArrayList<>();
 
     public static void compile(){
 
-        Hobby hobby = new Hobby(1,"\uD83D\uDC65 Do'st ortirish","\uD83D\uDC65 Заводить друзей",
-                "\uD83D\uDC65 Make friends");
+        languages.add(Language.UZ);
+        languages.add(Language.RU);
+        languages.add(Language.EN);
 
-        Hobby hobby1 = new Hobby(2,"\uD83D\uDDE3 Suhbatlashish", "\uD83D\uDDE3 Разговор",
-                "\uD83D\uDDE3 Conversation");
+        roles.add(Role.REGISTER);
+        roles.add(Role.CUSTOMER);
+        roles.add(Role.ADMIN);
 
-        Hobby hobby2 = new Hobby(3,"\uD83E\uDEC2 Juft izlash", "\uD83E\uDEC2 Поиск пары",
-                "\uD83E\uDEC2 Find lover");
+        userStatuses.add(UserStatus.NEW);
+        userStatuses.add(UserStatus.LANGUAGE);
+        userStatuses.add(UserStatus.HAS_CONTACT);
+        userStatuses.add(UserStatus.HOBBY);
+        userStatuses.add(UserStatus.GENDER);
+        userStatuses.add(UserStatus.MENU);
+        userStatuses.add(UserStatus.SETTING);
+        userStatuses.add(UserStatus.CONTACT_ADMIN);
+        userStatuses.add(UserStatus.WRITE_COMPLAINT);
+        userStatuses.add(UserStatus.SENDING_REKLAMA);
+        userStatuses.add(UserStatus.USER_CONVERSATION);
+        userStatuses.add(UserStatus.USER_FOLLOWER_BUTTON);
+        userStatuses.add(UserStatus.USER_GET_CONTACT);
+        userStatuses.add(UserStatus.USER_GET_TELEGRAM_ID);
+        userStatuses.add(UserStatus.USER_WROTE_OTHER);
+        userStatuses.add(UserStatus.USER_GIVE_NICKNAME);
+        userStatuses.add(UserStatus.ADMIN_WRITE_RESPONSE);
+        userStatuses.add(UserStatus.ADMIN_MENU);
+        userStatuses.add(UserStatus.ADMIN_PUT_REKLAMA);
 
-        hobbies.add(hobby);
-        hobbies.add(hobby1);
-        hobbies.add(hobby2);
-
-//        User admin = new User(1666912639L,"hasan1018");
-//        admin.setLanguage(Language.UZ);
-        //admin.setRole(Role.ADMIN);
-
-//        customers.add(admin);
 
         // in progress
     }

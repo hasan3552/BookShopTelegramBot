@@ -393,7 +393,7 @@ public class KeyboardUtil {
         return markup;
     }
 
-    public static InlineKeyboardMarkup getChatMarkup(User toUser) {
+    public static InlineKeyboardMarkup getChatMarkup(Long toUser) {
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
@@ -401,7 +401,7 @@ public class KeyboardUtil {
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText("✏️ RESPONSE");
-        button.setCallbackData(String.valueOf(toUser.getId()));
+        button.setCallbackData(String.valueOf(toUser));
         row.add(button);
         rowList.add(row);
 
